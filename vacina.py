@@ -1,29 +1,29 @@
 import sqlite3
-from datetime import datetime
+from plyer import notification
 
-def criar_banco_e_tabela():
-    conn = sqlite3.connect('teste1.db')
+def obter_dados_vacinacao():
+    conn = sqlite3.connect('Vacinas.db')
     cursor = conn.cursor()
-    
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS pessoas (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            data_cadastrada TEXT
-        )
-    ''')
-    
-    data_exemplo = datetime.now().strftime('2024-09-14')
-    
-    cursor.execute('''
-        INSERT OR REPLACE INTO pessoas (id, data_cadastrada)
-        VALUES (1, ?)
-    ''', (data_exemplo,))
-    
-    conn.commit()
+    cursor.execute("SELECT vacina, data FROM vacinas WHERE status='pendente'")
+    resultados = cursor.fetchall()
     conn.close()
+    return resultados
 
+def enviar_notificacao():
+    vacinas = obter_dados_vacinacao()
+    
+    if vacinas:
+        mensagem = "Você tem as seguintes vacinas pendentes:\n"
+        for vacina, data in vacinas:
+            mensagem += f"- {vacina} (Data: {data})\n"
+    else:
+        mensagem = "Todas as vacinas estão em dia!"
 
-criar_banco_e_tabela()
+    notification.notify(
+        title="Vacinação",
+        message=mensagem,
+        timeout=10,
+        app_icon="",
+    )
 
-print("Banco de dados 'teste1.db' criado e tabela 'pessoas' inicializada com sucesso!")
-
+enviar_notificacao()
